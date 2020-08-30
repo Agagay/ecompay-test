@@ -1,15 +1,17 @@
 <?php
 
-namespace App\Controller\Message\DepKasa;
+namespace App\Message\DepKasa;
 
+
+use App\DepKasa\Response\CallbackResponse;
 
 class StatusMessage
 {
     private $paymentId;
 
-    public function __construct(int $id)
+    public function __construct(int $paymentId)
     {
-        $this->paymentId = $id;
+        $this->paymentId = $paymentId;
     }
 
     public function getPaymentId(): int

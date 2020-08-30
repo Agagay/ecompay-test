@@ -8,7 +8,11 @@ framework:
             # async: '%env(MESSENGER_TRANSPORT_DSN)%'
             # failed: 'doctrine://default?queue_name=failed'
             # sync: 'sync://'
+            status:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                retry_strategy:
+                    max_retries: 10
 
         routing:
             # Route your messages to the transports
-            # 'App\Message\YourMessage': async
+             'App\Message\DepKasa\StatusMessage': status

@@ -2,7 +2,7 @@
 
 namespace App\Controller;
 
-use App\Controller\Message\DepKasa\StatusMessage;
+use App\Message\DepKasa\StatusMessage;
 use App\DepKasa\DepKasa;
 use App\DepKasa\Request\WelcomeRequest;
 use App\DepKasa\Response\CallbackResponse;
@@ -102,22 +102,36 @@ class DepKasaController extends BaseController
         $paymentRepository = $this->getEm()->getRepository(Payment::class);
         $payment = $paymentRepository->find($apiResponse->referenceNo);
 
-//        $paymentLog = $this->createPaymentStatusLog(PaymentStatus::STATUS_RECEIVED);
-//        $payment
-//            ->setIdExternalTransaction($apiResponse->transactionId)
-//            ->addPaymentStatusLog($paymentLog);
-//        $this->getEm()->flush();
+        $paymentLog = $this->createPaymentStatusLog(PaymentStatus::STATUS_RECEIVED);
+        $payment->addPaymentStatusLog($paymentLog);
+        $this->getEm()->flush();
 
-        try {
+        $callbackStatus = $apiResponse->status;
 
-            $bus->dispatch(new StatusMessage($payment->getId()));
-        } catch (\Exception $e) {
-            dd($e);
+        switch ($callbackStatus) {
+            case CallbackResponse::STATUS_APPROVED:
+                $paymentLog = $this->createPaymentStatusLog(PaymentStatus::STATUS_SUCCESS);
+                $payment->addPaymentStatusLog($paymentLog);
+                break;
+            case CallbackResponse::STATUS_DECLINED:
+                $paymentLog = $this->createPaymentStatusLog(PaymentStatus::STATUS_DECLINE);
+                $payment->addPaymentStatusLog($paymentLog);
+                break;
+            case CallbackResponse::STATUS_CANCELED:
+                break;
+            case CallbackResponse::STATUS_PENDING:
+                $bus->dispatch(new StatusMessage($payment->getId()));
+                break;
+            case CallbackResponse::STATUS_ERROR:
+                break;
         }
 
-        dd($apiResponse);
-
-        // parse $apiResponse
+        return $this->json([
+            'message' => $apiResponse->message,
+            'status' => $apiResponse->status,
+            'transactionInner' => $apiResponse->referenceNo,
+            'transactionOuter' => $apiResponse->transactionId,
+        ]);
 
     }
 

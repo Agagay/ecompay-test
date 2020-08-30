@@ -5,7 +5,10 @@ namespace App\DepKasa;
 
 
 use App\DepKasa\Request\BaseRequest;
+use App\DepKasa\Request\DetailRequest;
 use App\DepKasa\Request\WelcomeRequest;
+use App\DepKasa\Response\BaseResponse;
+use App\DepKasa\Response\DetailResponse;
 use App\DepKasa\Response\WelcomeResponse;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -27,6 +30,14 @@ class DepKasa
         return self::API_URL . $request->getMethod();
     }
 
+    private function post(string $url, array $parameters = [])
+    {
+        $data = [
+            'query' => array_merge($parameters, ['apiKey' => self::API_KEY]),
+        ];
+        return $this->httpClient->request('POST', $url, $data);
+    }
+
     public static function generateWelcomeToken($amount, $currency, $paymentId, $timestamp)
     {
         $rawHash = self::SECRET . self::API_KEY . $amount . $currency .
@@ -45,10 +56,13 @@ class DepKasa
 
     public function welcome(WelcomeRequest $request, WelcomeResponse $response)
     {
-        $data = [
-            'query' => array_merge((array)$request, ['apiKey' => self::API_KEY]),
-        ];
-        $result = $this->httpClient->request('POST', $this->makeUrl($request), $data);
+        $result = $this->post($this->makeUrl($request), (array)$request);
+        return $response->parseResponse(json_decode($result->getContent(), true));
+    }
+
+    public function detail(DetailRequest $request, DetailResponse $response)
+    {
+        $result = $this->post($this->makeUrl($request), (array)$request);
         return $response->parseResponse(json_decode($result->getContent(), true));
     }
 }
