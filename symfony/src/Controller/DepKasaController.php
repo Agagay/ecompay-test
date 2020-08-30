@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Controller\Message\DepKasa\StatusMessage;
 use App\DepKasa\DepKasa;
 use App\DepKasa\Request\WelcomeRequest;
 use App\DepKasa\Response\CallbackResponse;
@@ -11,6 +12,8 @@ use App\Entity\PaymentStatus;
 use App\Entity\PaymentStatusLog;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Messenger\MessageBus;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Annotation\Route;
 
 /**
@@ -69,6 +72,7 @@ class DepKasaController extends BaseController
 
         return $this->json([
             'message' => 'transaction created',
+            'timestamp' => $apiRequest->timestamp,
             'transactionInner' => $payment->getId(),
             'transactionOuter' => $payment->getIdExternalTransaction(),
         ]);
@@ -76,7 +80,7 @@ class DepKasaController extends BaseController
     /**
      * @Route("/callback", methods={"POST"})
      */
-    public function callback(Request $request, DepKasa $depKasa)
+    public function callback(Request $request, DepKasa $depKasa, MessageBusInterface $bus)
     {
         $fields = json_decode($request->getContent(), true);
 
@@ -94,6 +98,24 @@ class DepKasaController extends BaseController
         if ($token !== $apiResponse->token) {
             $this->json(['error' => 'Invalid token']);
         }
+
+        $paymentRepository = $this->getEm()->getRepository(Payment::class);
+        $payment = $paymentRepository->find($apiResponse->referenceNo);
+
+//        $paymentLog = $this->createPaymentStatusLog(PaymentStatus::STATUS_RECEIVED);
+//        $payment
+//            ->setIdExternalTransaction($apiResponse->transactionId)
+//            ->addPaymentStatusLog($paymentLog);
+//        $this->getEm()->flush();
+
+        try {
+
+            $bus->dispatch(new StatusMessage($payment->getId()));
+        } catch (\Exception $e) {
+            dd($e);
+        }
+
+        dd($apiResponse);
 
         // parse $apiResponse
 

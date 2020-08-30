@@ -1,27 +1,4 @@
 <?php
-//date_default_timezone_set('Europe/Moscow');
-//$apiKey = 'daef4ff758859227ac5ff22b3d73e090';
-//$currency = 'EUR';
-//$amount = 300200;
-//$referenceNo = 123;
-//$dateTime = new DateTime();
-//$timestamp = $dateTime->getTimestamp();
-//$secretKey = 'f07fce0a';
-//
-//$params = ['apiKey' => $apiKey, 'amount' => $amount, 'currency' => $currency, 'referenceNo' => $referenceNo, 'timestamp' => $timestamp];
-//
-//function generateToken($request, $secretKey)
-//{
-//    $rawHash = $secretKey . $request['apiKey'] . $request['amount'] . $request['currency'] .
-//        $request['referenceNo'] . $request['timestamp'];
-//    return md5($rawHash);
-//}
-//
-//print_r($timestamp);echo '<br>';
-//print_r($dateTime);echo '<br>';
-//print_r(generateToken($params, $secretKey));
-//
-//die();
 
 use App\Kernel;
 use Symfony\Component\Dotenv\Dotenv;
